@@ -1,0 +1,65 @@
+---
+title: "Data 607 Assignment 6"
+author: "Melissa Bowman"
+date: "2022-10-30"
+output: html_document
+---
+
+In Assignment 6, the task was to choose one of the New York Times APIs and request information from its web server through R. In R, the JSON data from the API server is to be read and transformed into a data frame. Here, The API used was the Book API that list all the best-seller information. The path specifically used was to get the best sellers list by a given date. (GET /lists/{date}/{list}.json). The biggest chunk of time spend on this assignment was deciphering how to make a request from the given API. 
+
+Load libraries.
+```{r libraries}
+library(httr)
+library(jsonlite)
+```
+
+Using NY Time Books API <br>
+Creating base URL for Best Sellers list by date.<br>
+Date needed to follow this naming convention YYYY-MM-DD or current. List had a given naming convention which was found by using New York Times Try this API PATHS names.json (https://developer.nytimes.com/docs/books-product/1/routes/lists/names.json/get). 
+```{r base_url}
+base_url <- "https://api.nytimes.com/svc/books/v3/lists/2008-07-01/hardcover-fiction.json"
+```
+
+API Key to access articles
+```{r key}
+key <- "?api-key=Y9o5BDG2LUOIJGGzV6Z403e73xkqymzU"
+```
+
+Full URL by combining URL base and key
+```{r full_url}
+full_url <- paste(base_url,key, sep = "")
+```
+
+Calling API
+```{r api_call}
+api_call <- httr::GET(full_url)
+```
+
+Check to see if the API call was successful
+```{r api status}
+api_call$status_code
+```
+
+The api_call variable is not usable in its current raw Unicode state. Thus, this variable needs to be converted into a character vector which resembles a JSON format. This is achieved by using the base R code rawToChar function. 
+```{r}
+api_char <- rawToChar(api_call$content)
+```
+
+Read content in JSON format and de-serializes it into R objects. Flattening function remove a level hierarchy from a list (like unlist function).
+```{r}
+api_JSON <- fromJSON(api_char, flatten = TRUE)
+```
+
+Creating the data frame from the JSON format list. 
+```{r}
+df_book_2008_07_01 <- data.frame(api_JSON$results$books)
+```
+
+Limited the data frame to a couple of columns 
+```{r}
+df_subset_2008_07_01 <- df_book_2008_07_01[ , c("rank", "title", "author", "price", "publisher", "primary_isbn13")]
+head(df_subset_2008_07_01)
+```
+### Conclusion: 
+
+Calling information for an API is a necessary skill to learn in data analysis. However, there is a bit of a learning curve. To work with a given API, an understanding of the API must be attained first otherwise there is no path to collect the data needed for analysis. Using the New York Times APIs was a straightforward introduction into API management. API’s usually have a key needed to access the information. This one was offered right away. Did not run into many limitations on the information accessed although there was a limit on how far back into the best seller list archives one can call. 
